@@ -1,0 +1,115 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <title>Stanford-corenlp by damienstanton</title>
+
+    <link rel="stylesheet" href="stylesheets/styles.css">
+    <link rel="stylesheet" href="stylesheets/github-light.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+    <!--[if lt IE 9]>
+    <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+  </head>
+  <body>
+    <div class="wrapper">
+      <header>
+        <h1>Stanford-corenlp</h1>
+        <p>Clojure wrapper for Stanford CoreNLP tools.</p>
+
+        <p class="view"><a href="https://github.com/damienstanton/stanford-corenlp">View the Project on GitHub <small>damienstanton/stanford-corenlp</small></a></p>
+
+
+        <ul>
+          <li><a href="https://github.com/damienstanton/stanford-corenlp/zipball/master">Download <strong>ZIP File</strong></a></li>
+          <li><a href="https://github.com/damienstanton/stanford-corenlp/tarball/master">Download <strong>TAR Ball</strong></a></li>
+          <li><a href="https://github.com/damienstanton/stanford-corenlp">View On <strong>GitHub</strong></a></li>
+        </ul>
+      </header>
+      <section>
+        <p>Clojure wrapper for Stanford CoreNLP tools.  Currently very incomplete, only
+wraps the tokenizer, parser and dependencies.</p>
+
+<p><a href="https://circleci.com/gh/damienstanton/stanford-corenlp"><img src="https://circleci.com/gh/damienstanton/stanford-corenlp.svg?style=shield" alt="Circle CI"></a></p>
+
+<h2>
+<a id="usage" class="anchor" href="#usage" aria-hidden="true"><span class="octicon octicon-link"></span></a>Usage</h2>
+
+<h3>
+<a id="tokenization" class="anchor" href="#tokenization" aria-hidden="true"><span class="octicon octicon-link"></span></a>Tokenization</h3>
+
+<pre><code>(use 'corenlp)
+(def text "This is a simple sentence.")
+(tokenize text)
+</code></pre>
+
+<h3>
+<a id="part-of-speech-tagging" class="anchor" href="#part-of-speech-tagging" aria-hidden="true"><span class="octicon octicon-link"></span></a>Part-of-Speech Tagging</h3>
+
+<pre><code>(use 'corenlp)
+(pos-tag (tokenize "Colorless green ideas sleep furiously."))
+;; =&gt; [#&lt;TaggedWord Colorless/JJ&gt; #&lt;TaggedWord green/JJ&gt; ...]
+</code></pre>
+
+<p>Returns a list of <code>TaggedWord</code> objects. Call <code>.tag()</code> on a <code>TaggedWord</code> instance
+to get its tag.</p>
+
+<h3>
+<a id="parsing" class="anchor" href="#parsing" aria-hidden="true"><span class="octicon octicon-link"></span></a>Parsing</h3>
+
+<p>To parse a sentence:</p>
+
+<pre><code>(use 'corenlp)
+(parse (tokenize text))
+</code></pre>
+
+<p>You will get back a LabeledScoredTreeNode which you can plug in to
+other Stanford CoreNLP functions or can convert to a standard Treebank
+string with:</p>
+
+<pre><code>(str (parse (tokenize text)))
+</code></pre>
+
+<h3>
+<a id="stanford-dependencies" class="anchor" href="#stanford-dependencies" aria-hidden="true"><span class="octicon octicon-link"></span></a>Stanford Dependencies</h3>
+
+<pre><code>(dependency-graph "I like cheese.")
+</code></pre>
+
+<p>will parse the sentence and return the dependency graph as a
+<a href="https://github.com/jkk/loom">loom</a> graph, which you can then traverse with
+standard graph algorithms like shortest path, etc. You can also view it:</p>
+
+<pre><code>(def graph (dependency-graph "I like cheese."))
+(use 'loom.io)
+(view graph)
+</code></pre>
+
+<p>This requires GraphViz to be installed.</p>
+
+<h2>
+<a id="license" class="anchor" href="#license" aria-hidden="true"><span class="octicon octicon-link"></span></a>License</h2>
+
+<p>Copyright (C) 2011-2015 Contributors (Clojure code only)</p>
+
+<p>Distributed under the Eclipse Public License, the same as Clojure.</p>
+
+<h2>
+<a id="contributors" class="anchor" href="#contributors" aria-hidden="true"><span class="octicon octicon-link"></span></a>Contributors</h2>
+
+<ul>
+<li>Cory Giles </li>
+<li>Hans Engel</li>
+<li>Damien Stanton</li>
+</ul>
+      </section>
+      <footer>
+        <p>This project is maintained by <a href="https://github.com/damienstanton">damienstanton</a></p>
+        <p><small>Hosted on GitHub Pages &mdash; Theme by <a href="https://github.com/orderedlist">orderedlist</a></small></p>
+      </footer>
+    </div>
+    <script src="javascripts/scale.fix.js"></script>
+    
+  </body>
+</html>
