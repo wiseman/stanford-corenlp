@@ -1,23 +1,31 @@
 (ns corenlp
   (:import
-    (java.io StringReader)
-    (edu.stanford.nlp.process 
-      DocumentPreprocessor PTBTokenizer)
-    (edu.stanford.nlp.ling
-     CoreAnnotations$PartOfSpeechAnnotation
-     Word)
-    (edu.stanford.nlp.tagger.maxent MaxentTagger)
-    (edu.stanford.nlp.trees 
-      LabeledScoredTreeNode PennTreebankLanguagePack  
-      LabeledScoredTreeReaderFactory)
-    (edu.stanford.nlp.parser.lexparser 
-      LexicalizedParser))
+   (java.io StringReader)
+   (java.util Collection)
+   (edu.stanford.nlp.process
+    DocumentPreprocessor PTBTokenizer)
+   (edu.stanford.nlp.ling
+    CoreAnnotations$PartOfSpeechAnnotation
+    CoreLabel
+    TaggedWord
+    Word)
+   (edu.stanford.nlp.tagger.maxent MaxentTagger)
+   (edu.stanford.nlp.trees
+    LabeledScoredTreeNode
+    LabeledScoredTreeReaderFactory
+    PennTreebankLanguagePack
+    TypedDependency)
+   (edu.stanford.nlp.parser.lexparser
+    LexicalizedParser))
   (:use
-    (loom graph attr)
-    clojure.set)
+   (loom graph attr)
+   clojure.set)
   (:require
-    [clojure.data.json :as json])
+   [clojure.data.json :as json]
+   [clojure.string :as string])
   (:gen-class :main true))
+
+(set! *warn-on-reflection* true)
 
 ;;;;;;;;;;;;;;;;
 ;; Preprocessing
@@ -51,7 +59,7 @@
   "Attempt to convert a given object into a Word, which is used by many downstream algorithms."
   type)
 
-(defmethod word String [s]
+(defmethod word String [^String s]
   (Word. s))
 
 (defmethod word Word [w] w)
@@ -67,15 +75,18 @@
 (defn pos-tag-annotate
   "Annotate a `CoreLabel` sequence with part-of-speech tags."
   [coll]
-
-  (doall (map #(.set %1 CoreAnnotations$PartOfSpeechAnnotation (.tag %2))
-            coll (.tagSentence (load-pos-tagger) coll)))
+  (doall (map (fn [^CoreLabel l ^TaggedWord w]
+                (.set l CoreAnnotations$PartOfSpeechAnnotation (.tag w)))
+              coll
+              (.tagSentence ^MaxentTagger (load-pos-tagger) coll)))
   coll)
 
 (defn pos-tag
   "Return the parts of speech for the words in a string."
   [string]
-  (map #(vector (.word %) (.tag %)) (-> string tokenize-core-label pos-tag-annotate)))
+  (map (fn [^CoreLabel l]
+         (vector (.word l) (.tag l)))
+       (-> string tokenize-core-label pos-tag-annotate)))
 
 ;;;;;;;;;;
 ;; Parsing
@@ -88,14 +99,16 @@
    (.readTree
     (.newTreeReader trf
                     (StringReader. s))))
+
  (defn read-scored-parse-tree [s]
    "Read a parse tree in PTB format with scores from a string."
    (read-parse-tree
     (->>
-     (filter #(not (and
-                    (.startsWith % "[")
-                    (.endsWith % "]")))
-             (.split s " "))
+     (filter (fn [^String s]
+               (not (and
+                     (.startsWith s "[")
+                     (.endsWith s "]"))))
+             (string/split s #" "))
      (interpose " ")
      (apply str)))))
 
@@ -113,10 +126,10 @@
 (defmethod parse :default [coll]
   [coll]
   "Use the LexicalizedParser to produce a constituent parse of sequence of strings or CoreNLP Word objects."
-  (.apply (load-parser)
-          (java.util.ArrayList. 
-            (map word coll)))) 
- 
+  (.apply ^LexicalizedParser (load-parser)
+          (java.util.ArrayList.
+            ^Collection (map word coll))))
+
 ;; Typed Dependencies
 
 (defrecord DependencyParse [words tags edges])
@@ -143,13 +156,13 @@
 (let [tlp (PennTreebankLanguagePack.)
       gsf (.grammaticalStructureFactory tlp)]
 
- (defmethod dependency-parse LabeledScoredTreeNode [n]
+ (defmethod dependency-parse LabeledScoredTreeNode [^LabeledScoredTreeNode n]
    (try
      (let [ty (.taggedYield n)]
        (DependencyParse.
-        (vec (map #(.word %) ty))
-        (vec (map #(.tag %) ty))
-        (map (fn [d] 
+        (vec (map (fn [^TaggedWord w] (.word w)) ty))
+        (vec (map (fn [^TaggedWord w] (.tag w)) ty))
+        (map (fn [^TypedDependency d] 
                [(dec (.. d gov index))
                 (dec (.. d dep index))
                 (keyword
